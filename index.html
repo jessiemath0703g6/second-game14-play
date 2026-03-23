@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jessie Math 捷析 - 邏輯工程遺跡修復</title>
+    
+    <meta name="description" content="© 2025–2026 Jessie Math 捷析老師. All rights reserved.">
+    <meta property="og:title" content="Jessie Math 捷析 - 邏輯工程遺跡修復">
+    <meta property="og:description" content="© 2025–2026 Jessie Math 捷析老師. All rights reserved.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="g6-u14-2.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;600&family=Noto+Sans+TC:wght@400;700&family=Fredoka+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- 變數設定 --- */
+        :root {
+            --neon-cyan: #00d2d3;
+            --neon-orange: #ff9f43;
+            --bg-dark: #0f0f1a;
+            --panel-bg: rgba(0, 20, 30, 0.85);
+            --danger: #ff4757;
+            --brand-yellow: #FFD700;
+        }
+
+        /* --- 全局設定 --- */
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-user-drag: none;
+            touch-action: none; 
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-dark) url('jessie-logo-play.jpg') top right / cover no-repeat fixed;
+            font-family: 'Noto Sans TC', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: white;
+        }
+
+        /* --- 背景特效與遮罩 --- */
+        .world-stage {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(26,26,46,0.6) 50%, rgba(30,30,46,0.8) 100%);
+            z-index: 0;
+            perspective: 1000px;
+        }
+
+        .grid-floor {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%; height: 50%;
+            background-image: 
+                linear-gradient(rgba(0, 210, 211, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 210, 211, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: perspective(500px) rotateX(60deg);
+            transform-origin: center top;
+            opacity: 0.3;
+        }
+
+        /* --- 橫向鎖定警告 (手機) --- */
+        #rotate-warning {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 99999; color: var(--brand-yellow); flex-direction: column;
+            justify-content: center; align-items: center; text-align: center; padding: 20px;
+        }
+        #rotate-warning i { font-size: 50px; margin-bottom: 20px; animation: rotatePhone 2s infinite; }
+        @keyframes rotatePhone { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
+        
+        @media screen and (max-width: 767px) and (orientation: portrait) {
+            #rotate-warning { display: flex; }
+        }
+
+        /* --- Header --- */
+        header {
+            position: relative;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-bottom: 2px solid var(--neon-orange);
+            height: 80px;
+        }
+
+        .brand-area { display: flex; align-items: center; gap: 15px; }
+        /* 更新要求：黃色外框，背景透明 */
+        .logo-circle {
+            width: 60px; height: 60px; background-color: transparent; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center; overflow: hidden;
+            border: 3px solid var(--brand-yellow); box-shadow: 0 0 10px var(--neon-orange); color: #333; font-family: 'Fredoka One', cursive;
+        }
+        .logo-circle img { width: 90%; height: auto; object-fit: contain; }
+        .brand-text { font-family: 'Fredoka One', cursive; font-size: 24px; color: #fff; letter-spacing: 1px; text-shadow: 2px 2px 0 #000; }
+        .nav-links { display: flex; gap: 10px; align-items: center; }
+        .nav-btn {
+            text-decoration: none; color: var(--neon-cyan); display: flex; flex-direction: column; align-items: center;
+            font-size: 11px; padding: 5px 10px; border: 1px solid rgba(0, 210, 211, 0.3); border-radius: 8px;
+            transition: all 0.2s; background: rgba(0,0,0,0.5); pointer-events: auto;
+        }
+        .nav-btn:hover { background-color: var(--neon-cyan); color: #000; transform: translateY(-2px); }
+        .nav-icon { font-size: 18px; margin-bottom: 2px; }
+
+        /* --- 計算白板 (透明) --- */
+        #calc-board {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 45; pointer-events: none; background: transparent; touch-action: none;
+        }
+        #calc-board.active { pointer-events: auto; cursor: crosshair; }
+        
+        .wb-controls {
+            position: fixed; top: 90px; left: 20px; z-index: 150; display: flex; gap: 10px; flex-direction: column;
+        }
+        .wb-btn {
+            background: rgba(0,0,0,0.8); border: 1px solid var(--neon-cyan); color: var(--neon-cyan);
+            padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 14px; transition: 0.2s;
+            pointer-events: auto; box-shadow: 0 0 8px rgba(0,210,211,0.3);
+        }
+        .wb-btn.active-btn { background: var(--neon-cyan); color: #000; font-weight: bold; }
+
+        /* --- 遊戲主區域 --- */
+        .game-container {
+            position: relative; z-index: 10; flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: space-between; padding-bottom: 80px;
+        }
+
+        .status-hud {
+            position: absolute; top: 10px; right: 10px; width: 190px; background: rgba(0, 20, 20, 0.9);
+            border: 1px solid var(--neon-cyan); padding: 8px; border-radius: 5px; font-size: 0.9rem; z-index: 50;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .status-hud-left { flex: 1; }
+        .bag-icon {
+            font-size: 30px; 
+            margin-left: 10px; 
+            transition: all 0.3s;
+            filter: drop-shadow(0 0 2px #fff);
+        }
+        .warning-lights { display: flex; gap: 5px; justify-content: center; margin-top: 5px; background: #000; padding: 3px; }
+        .light { width: 30px; height: 6px; background: #333; transition: 0.3s; }
+        .light.active { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+        .timer-gauge {
+            position: absolute; bottom: 100px; left: 20px; width: 90px; height: 90px; background: rgba(0,0,0,0.6);
+            border-radius: 50%; border: 4px solid var(--neon-orange); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; box-shadow: 0 0 15px rgba(255, 159, 67, 0.4); z-index: 50;
+        }
+        .timer-val { font-family: 'Teko', sans-serif; font-size: 36px; color: var(--neon-orange); line-height: 1; }
+
+        .center-stage {
+            flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            width: 100%; max-width: 800px; margin-top: 10px; z-index: 40; pointer-events: none;
+        }
+
+        .question-display {
+            background: var(--panel-bg); border: 1px solid var(--neon-cyan); padding: 20px 25px; border-radius: 10px;
+            color: #fff; font-size: 1.3rem; text-align: center; width: 90%; margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(0, 210, 211, 0.4); position: relative; line-height: 1.6;
+            backdrop-filter: blur(3px); pointer-events: auto;
+        }
+        .question-display b { color: var(--neon-orange); }
+
+        .relic-zone {
+            width: 200px; height: 200px; position: relative; display: flex; justify-content: center; align-items: center; pointer-events: auto;
+        }
+        .relic-base {
+            position: absolute; bottom: -10px; width: 180px; height: 50px;
+            background: radial-gradient(ellipse at center, rgba(0, 210, 211, 0.4) 0%, transparent 70%);
+            border-radius: 50%; transform: rotateX(60deg); animation: pulseBase 2s infinite;
+        }
+        @keyframes pulseBase { 0% { opacity: 0.4; transform: rotateX(60deg) scale(1); } 50% { opacity: 0.7; transform: rotateX(60deg) scale(1.1); } 100% { opacity: 0.4; transform: rotateX(60deg) scale(1); } }
+        
+        .relic-img { font-size: 90px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); z-index: 5; transition: all 0.3s; }
+        
+        /* --- 新增/升級的狀態特效 --- */
+        .relic-cracked { filter: drop-shadow(0 0 15px red) grayscale(30%); animation: unstableShake 0.1s infinite; }
+        @keyframes unstableShake { 0% { transform: translate(5px, 5px) rotate(3deg); } 50% { transform: translate(-5px, -5px) rotate(-3deg); } 100% { transform: translate(5px, 5px) rotate(3deg); } }
+
+        /* 升級感 (答對一次) */
+        .relic-upgrade { animation: upgradePulse 0.5s ease-out; }
+        @keyframes upgradePulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(0,210,211,0.5)); }
+            50% { transform: scale(1.2); filter: drop-shadow(0 0 30px var(--neon-cyan)) brightness(1.5); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
+        }
+
+        /* 煥然一新 (完全修復) */
+        .relic-restored { animation: restoredGlow 1s ease-out forwards; }
+        @keyframes restoredGlow {
+            0% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
+            40% { transform: scale(1.3); filter: drop-shadow(0 0 50px var(--brand-yellow)) brightness(2); }
+            100% { transform: scale(1.1); filter: drop-shadow(0 0 20px var(--brand-yellow)) brightness(1.2); }
+        }
+
+        /* 碎裂 (錯誤兩次) */
+        .relic-shatter { animation: shatterAnim 0.8s forwards; }
+        @keyframes shatterAnim {
+            0% { transform: scale(1) rotate(0deg); filter: grayscale(50%) brightness(0.8); opacity: 1; }
+            20% { transform: scale(1.1) rotate(-15deg); filter: grayscale(80%) brightness(2); opacity: 1; }
+            100% { transform: scale(0) rotate(90deg) translateY(50px); filter: grayscale(100%) brightness(0); opacity: 0; }
+        }
+
+        .progress-ring { position: absolute; width: 220px; height: 220px; transform: rotate(-90deg); pointer-events: none; }
+        .progress-circle { fill: none; stroke: var(--neon-cyan); stroke-width: 6; stroke-dasharray: 690; stroke-dashoffset: 690; transition: stroke-dashoffset 0.5s; }
+
+        .toolbox-area {
+            display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; width: 100%; padding: 0 10px; z-index: 50; flex-wrap: wrap; pointer-events: auto;
+        }
+        .tool-card {
+            width: 90px; height: 100px; background: linear-gradient(180deg, #333, #111); border: 2px solid #555; border-radius: 8px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: grab; position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: transform 0.1s;
+        }
+        .tool-card:active { cursor: grabbing; transform: scale(0.95); }
+        .tool-icon { font-size: 30px; margin-bottom: 5px; }
+        .tool-value { font-family: 'Noto Sans TC', sans-serif; font-size: 16px; color: var(--neon-cyan); font-weight: bold; background: rgba(0,0,0,0.5); width: 100%; text-align: center; padding: 4px 0; white-space: nowrap; }
+        .tool-card.dragging { position: fixed; z-index: 9999; pointer-events: none; opacity: 0.9; transform: scale(1.1); box-shadow: 0 0 20px var(--neon-orange); border-color: var(--neon-orange); }
+
+        /* --- Footer --- */
+        footer {
+            position: fixed; bottom: 15px; left: 0; width: 100%; display: flex; justify-content: center; z-index: 150; pointer-events: none;
+        }
+        .footer-pill {
+            background: rgba(15, 15, 26, 0.9); border: 1px solid var(--neon-cyan); border-radius: 50px; padding: 8px 25px; display: flex; align-items: center; gap: 20px; backdrop-filter: blur(5px); pointer-events: auto; box-shadow: 0 0 15px rgba(0, 210, 211, 0.2);
+        }
+        .footer-left, .footer-right { display: flex; align-items: center; gap: 10px; }
+        .footer-dot { width: 8px; height: 8px; background-color: var(--neon-orange); border-radius: 50%; box-shadow: 0 0 5px var(--neon-orange); animation: pulseDot 2s infinite; }
+        @keyframes pulseDot { 0% { opacity: 0.5; } 50% { opacity: 1; box-shadow: 0 0 10px var(--neon-orange); } 100% { opacity: 0.5; } }
+        .footer-copy, .footer-tagline { font-size: 12px; color: #ccc; letter-spacing: 0.5px; }
+        .footer-right { border-left: 1px solid #555; padding-left: 20px; }
+        .footer-icon { color: var(--neon-cyan); font-size: 14px; }
+
+        /* --- 右下角音效控制 --- */
+        .sound-control-btn {
+            position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px;
+            background: rgba(0, 0, 0, 0.7); border: 2px solid var(--neon-cyan); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center; font-size: 20px;
+            cursor: pointer; z-index: 999; box-shadow: 0 0 10px rgba(0,210,211,0.5); pointer-events: auto;
+            transition: all 0.3s;
+        }
+        .sound-control-btn:hover { transform: scale(1.1); background: var(--neon-cyan); }
+
+        /* --- 正誤回饋彈出視窗 --- */
+        .error-popup, .correct-popup {
+            position: absolute;
+            top: 55%; 
+            left: 55%;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 200;
+            pointer-events: none;
+            display: none;
+            white-space: nowrap;
+            font-size: 12px; 
+            line-height: 1.3;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-origin: top left;
+        }
+        .error-popup { background: rgba(255, 71, 87, 0.95); color: white; box-shadow: 0 0 10px red; }
+        .correct-popup { background: rgba(46, 204, 113, 0.95); color: white; box-shadow: 0 0 10px #2ecc71; }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* --- 粒子特效群 --- */
+        .smoke-particle {
+            position: absolute; width: 30px; height: 30px; background: rgba(150, 150, 150, 0.8);
+            border-radius: 50%; pointer-events: none; z-index: 60; filter: blur(3px);
+            animation: smokeAnim 0.8s ease-out forwards;
+        }
+        @keyframes smokeAnim {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(2.5); opacity: 0; }
+        }
+
+        @keyframes sparkAnim {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.5); opacity: 0; }
+        }
+
+        /* 碎片特效 */
+        .shard-particle {
+            position: absolute; width: 12px; height: 12px; background: #666;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            pointer-events: none; z-index: 60; filter: drop-shadow(0 0 2px #000);
+            animation: shardFly 0.8s ease-out forwards;
+        }
+        @keyframes shardFly {
+            0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0) rotate(var(--rot)); opacity: 0; }
+        }
+
+        /* 煥然一新的光環擴散 */
+        .ring-particle {
+            position: absolute; width: 100px; height: 100px;
+            border: 5px solid var(--brand-yellow); border-radius: 50%;
+            top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
+            pointer-events: none; z-index: 55; opacity: 1;
+            animation: ringExpand 0.8s ease-out forwards;
+        }
+        @keyframes ringExpand {
+            100% { transform: translate(-50%, -50%) scale(3); opacity: 0; border-width: 0; filter: drop-shadow(0 0 10px var(--brand-yellow)); }
+        }
+
+        /* --- Overlays & Modals --- */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; text-align: center;
+        }
+        .btn-group { display: flex; gap: 15px; margin-top: 20px; }
+        .btn-start, .btn-rank {
+            border: 2px solid var(--neon-cyan); background: transparent; color: var(--neon-cyan); padding: 10px 30px;
+            font-size: 20px; font-family: 'Teko', sans-serif; cursor: pointer; transition: all 0.2s; border-radius: 5px;
+        }
+        .btn-start:hover { background: var(--neon-cyan); color: #000; }
+        .btn-rank { border-color: var(--brand-yellow); color: var(--brand-yellow); }
+        .btn-rank:hover { background: var(--brand-yellow); color: #000; }
+        input[type="text"] { background: #222; border: 1px solid #555; color: white; padding: 8px; text-align: center; font-size: 1.2rem; margin-bottom: 10px; border-radius:5px; }
+
+        /* --- Rank Modal --- */
+        .modal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 550px;
+            background: rgba(15, 15, 30, 0.95); border: 2px solid var(--brand-yellow); border-radius: 10px;
+            z-index: 3000; padding: 20px; display: none; box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); max-height: 80vh; overflow-y: auto;
+        }
+        .modal-header { font-family: 'Teko', sans-serif; font-size: 30px; color: var(--brand-yellow); margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; text-align:center; }
+        
+        .rank-list { list-style: none; padding: 0; margin: 0; text-align: left; width: 100%; font-size: 14px;}
+        .rank-header { display: flex; border-bottom: 2px solid #555; font-weight: bold; color: var(--brand-yellow); padding-bottom: 5px; margin-bottom: 5px;}
+        .rank-item { display: flex; padding: 8px 0; border-bottom: 1px dotted #333; color: #eee; align-items: center; }
+        .rank-item span, .rank-header span { flex: 1; text-align: center; }
+        .rank-item span:nth-child(1) { flex: 0.5; font-size: 18px;}
+        .rank-item span:nth-child(2) { flex: 1.5; text-align: left; padding-left:10px; font-weight:bold; }
+        
+        .close-modal { display: block; width: 100%; margin-top: 15px; background: #333; border: 1px solid #555; color: white; padding: 10px; cursor: pointer; font-size: 16px; transition: 0.2s; border-radius: 5px;}
+        .close-modal:hover { background: #555; }
+
+        /* --- RWD --- */
+        /* 新增：平板調整 (將按鈕改為橫排，避免被題目擋住) */
+        @media (max-width: 1024px) {
+            .wb-controls {
+                flex-direction: row;
+                flex-wrap: wrap;
+                width: calc(100% - 210px);
+                gap: 8px;
+                top: 90px;
+                left: 10px;
+            }
+            .game-container { padding-top: 40px; }
+        }
+
+        @media (max-width: 768px) {
+            header { padding: 5px 10px; height: 60px; }
+            .brand-text { font-size: 18px; }
+            .logo-circle { width: 40px; height: 40px; }
+            .nav-btn span:nth-child(2) { display: none; }
+            .nav-icon { margin: 0; font-size: 20px; }
+            
+            /* 手機板按鈕微調縮小並往上靠 */
+            .wb-controls { top: 65px; left: 5px; width: calc(100% - 175px); gap: 5px; }
+            .wb-btn { padding: 5px 8px; font-size: 12px; }
+            .status-hud { width: 160px; padding: 5px; }
+            .game-container { padding-top: 45px; }
+
+            .question-display { font-size: 1rem; padding: 15px 10px; margin-bottom: 10px; }
+            .relic-zone { width: 160px; height: 160px; margin-top: 5px; }
+            .relic-img { font-size: 70px; }
+            .progress-ring { width: 180px; height: 180px; }
+            
+            .error-popup, .correct-popup { font-size: 10px; padding: 4px 8px; }
+
+            .toolbox-area { gap: 8px; margin-bottom: 60px; }
+            .tool-card { width: 80px; height: 85px; }
+            .timer-gauge { width: 60px; height: 60px; bottom: 80px; left: 10px; opacity: 0.8; }
+            .timer-val { font-size: 24px; }
+
+            .footer-pill { flex-direction: column; gap: 5px; padding: 8px 15px; width: 90%; align-items: flex-start; }
+            .footer-right { border-left: none; padding-left: 0; }
+            .sound-control-btn { bottom: 80px; right: 10px; width: 35px; height: 35px; font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="rotate-warning">
+        <i class="fas fa-mobile-alt"></i>
+        <span>工程師，請將手機轉為橫向<br>以獲得最佳修復視野！</span>
+    </div>
+
+    <div class="world-stage"><div class="grid-floor"></div></div>
+
+    <canvas id="calc-board" width="1920" height="1080"></canvas>
+
+    <header>
+        <div class="brand-area">
+            <div class="logo-circle"><img src="JESSIEMATH-Q.png" alt="Logo" onerror="this.style.display='none'; this.parentNode.innerText='JM'"></div>
+            <div class="brand-text">Jessie Math 捷析</div>
+        </div>
+        <nav class="nav-links">
+            <a href="https://jessiemath0703-chu.github.io/website2/" class="nav-btn"><span class="nav-icon">🏠</span><span>首頁</span></a>
+            <a href="https://jessiemath0703-chu.github.io/Game-Lobby/" class="nav-btn"><span class="nav-icon">🎮</span><span>遊戲大廳</span></a>
+            <a href="https://jessiemath0703-chu.github.io/Game-Lobby/#g6-u14" class="nav-btn"><span class="nav-icon">🔙</span><span>G6怎樣解題(二)</span></a>
+        </nav>
+    </header>
+
+    <div class="wb-controls">
+        <button id="toggle-wb" class="wb-btn">✏️ 寫計算紙</button>
+        <button id="clear-wb" class="wb-btn" style="display:none; background:#e74c3c; border-color:#c0392b; color:white;">🗑️ 清除</button>
+        
+        <button id="pause-btn" class="wb-btn" style="display:none; border-color:var(--brand-yellow); color:var(--brand-yellow);">⏸️ 暫停</button>
+        <button id="restart-btn" class="wb-btn" style="display:none; border-color:var(--neon-orange); color:var(--neon-orange);">🔄 重新</button>
+        <a href="https://jessiemath0703-chu.github.io/Game-Lobby/#g6-u14" id="back-btn" class="wb-btn" style="display:none; text-decoration:none; text-align:center; border-color:#2ecc71; color:#2ecc71;">🔙 回主選單</a>
+    </div>
+
+    <div class="game-container">
+        <div class="status-hud">
+            <div class="status-hud-left">
+                <div style="display:flex; justify-content:space-between; color: var(--neon-cyan);">
+                    <span>修復進度</span>
+                    <span><span id="score">0</span> / 4</span>
+                </div>
+                <div style="font-size: 10px; color: #888; text-align: center; margin-top:5px;">結構穩定度 (Stability)</div>
+                <div class="warning-lights">
+                    <div class="light" id="light-1"></div>
+                    <div class="light" id="light-2"></div>
+                </div>
+            </div>
+            <div id="bag-icon" class="bag-icon">🎒</div>
+        </div>
+
+        <div class="timer-gauge">
+            <div class="timer-val" id="timer">90</div>
+            <div style="font-size: 10px; color:#aaa;">SEC</div>
+        </div>
+
+        <div class="center-stage">
+            <div class="question-display">
+                <span style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(--neon-orange); color:black; font-size:12px; padding:2px 10px; border-radius:10px; font-weight:bold;" id="q-category">系統準備中</span>
+                <div id="q-text">系統初始化中...</div>
+            </div>
+
+            <div class="relic-zone" id="drop-zone">
+                <svg class="progress-ring" viewBox="0 0 240 240"><circle class="progress-circle" id="progress-circle" cx="120" cy="120" r="110" /></svg>
+                <div class="relic-base"></div>
+                <div class="relic-img" id="relic-target">🏺</div>
+                
+                <div id="correct-msg" class="correct-popup">
+                    ✅ 修復正確
+                </div>
+
+                <div id="error-msg" class="error-popup">
+                    ⚠️ 失誤！<br>
+                    正確: <span id="correct-val" style="color:yellow;"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="toolbox-area" id="tools-container"></div>
+    </div>
+
+    <div id="sound-toggle" class="sound-control-btn">🔊</div>
+
+    <footer>
+        <div class="footer-pill">
+            <div class="footer-left">
+                <div class="footer-dot" aria-hidden="true"></div>
+                <div class="footer-copy">© 2025–2026 Jessie Math 捷析老師. All rights reserved.</div>
+            </div>
+            <div class="footer-right">
+                <div class="footer-icon" aria-hidden="true"><i class="fas fa-compass"></i></div>
+                <div class="footer-tagline">數學不迷路，Jessie帶你走向理解。</div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="start-screen" class="overlay">
+        <h1 style="color:var(--neon-orange); font-family:'Teko'; font-size:55px; margin:0; text-shadow: 0 0 10px rgba(255,159,67,0.5);">邏輯工程遺跡修復</h1>
+        <p style="color:#ddd; font-size:16px; margin-bottom:20px; line-height:1.6; max-width: 400px; text-align:left; background:rgba(0,0,0,0.6); padding:15px; border-radius:10px; border:1px solid #444;">
+            📜 <b>任務目標：</b> 90秒內修復至少 <b>4</b> 個受損的數學文物。<br>
+            ⚠️ <b>規則：</b> 將正確數值拖曳至文物。每個文物需要成功答對兩次才能完全修復。<br>
+            💥 <b>警告：</b> 同一題連續兩次計算失誤將導致該文物碎裂，強制換下一個。
+        </p>
+        <input type="text" id="username" placeholder="請輸入工程師代號" autocomplete="off">
+        <div class="btn-group">
+            <button class="btn-start" id="start-btn">開始任務</button>
+            <button class="btn-rank" id="show-rank-btn">🏆 排行榜</button>
+        </div>
+    </div>
+
+    <div id="rank-modal" class="modal">
+        <div class="modal-header">🏆 頂尖邏輯工程師 (Top 10)</div>
+        <div class="rank-header">
+            <span style="flex:0.5">名次</span><span style="flex:1.5;text-align:left;padding-left:10px;">代號</span><span style="flex:1.2">修復/答題</span><span style="flex:0.8">狀態</span><span style="flex:1.5">日期/時間</span>
+        </div>
+        <ul class="rank-list" id="rank-list"></ul>
+        <button class="close-modal" id="close-rank-btn">關閉系統</button>
+    </div>
+
+    <div id="end-screen" class="overlay" style="display: none;">
+        <h1 id="end-title" style="color:var(--danger); font-family:'Teko'; font-size:60px; margin:0;">任務結束</h1>
+        
+        <img id="reward-badge" src="G6-U14.jpg" alt="闖關成功徽章" style="display:none; width:150px; margin: 10px auto; border-radius:10px; box-shadow:0 0 15px var(--brand-yellow);">
+        
+        <p style="font-size:24px; margin-top:10px;">成功修復文物: <span id="final-score" style="color:var(--brand-yellow); font-size:36px; font-weight:bold;">0</span> / 4</p>
+        <p id="end-status-text" style="color:#ccc; margin-bottom: 20px;"></p>
+        <div class="btn-group">
+            <button class="btn-start" onclick="location.reload()">重新挑戰</button>
+            <button class="btn-rank" id="end-rank-btn">🏆 排行榜</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 音效設定 ---
+        const sounds = {
+            failTwice: new Audio('2.mp3'),    // 全破 (錯誤兩次)
+            failOnce: new Audio('3.mp3'),     // 破裂一次
+            bgm: new Audio('4.mp3'),          // 背景
+            correctOnce: new Audio('5.mp3'),  // 正確一次
+            repairOne: new Audio('6.mp3'),    // 正確 (修復好一個文物)
+            gameWin: new Audio('7.mp3'),      // 闖關成功
+            gameLose: new Audio('8.mp3')      // 闖關失敗
+        };
+        sounds.bgm.loop = true;
+
+        let isMuted = false;
+        const soundToggleBtn = document.getElementById('sound-toggle');
+        soundToggleBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            soundToggleBtn.innerText = isMuted ? "🔇" : "🔊";
+            Object.values(sounds).forEach(audio => { audio.muted = isMuted; });
+        });
+
+        let currentSFX = null;
+        let sfxTimeout = null;
+
+        function playSound(audio, limitTo3Sec = false) {
+            if (isMuted) return;
+            
+            // 讓 BGM 背景音樂獨立播放，不受中斷邏輯影響
+            if (audio === sounds.bgm) {
+                audio.play().catch(e => console.log("播放音效被瀏覽器阻擋:", e));
+                return;
+            }
+
+            // 新音效觸發時，先暫停並重置前一個音效，防止重疊
+            if (currentSFX) {
+                currentSFX.pause();
+                currentSFX.currentTime = 0;
+            }
+            if (sfxTimeout) {
+                clearTimeout(sfxTimeout);
+                sfxTimeout = null;
+            }
+
+            audio.currentTime = 0;
+            audio.play().catch(e => console.log("播放音效被瀏覽器阻擋:", e));
+            currentSFX = audio;
+
+            // 正確/失敗等指定音效只播放前三秒
+            if (limitTo3Sec) {
+                sfxTimeout = setTimeout(() => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    currentSFX = null;
+                }, 3000);
+            }
+        }
+
+        // --- 動態無限題庫生成引擎 (升級擴充版: 24種模板) ---
+        let usedQuestionIndices = [];
+        
+        function generateDynamicQuestion() {
+            const templates = [
+                () => { // 1. 速率: 追趕問題
+                    let diff = Math.floor(Math.random() * 3 + 2); let v2 = Math.floor(Math.random() * 4 + 4); let v1 = v2 + diff; let t = Math.floor(Math.random() * 6 + 4); let distAhead = diff * t;
+                    let names = [["小唐", "莎莎"], ["阿傑", "小明"], ["胖虎", "大雄"]][Math.floor(Math.random()*3)];
+                    return { type: "追趕問題", q: `${names[0]}秒速 ${v1}m，${names[1]}秒速 ${v2}m。${names[1]}在前方 <b>${distAhead}m</b> 處，${names[0]}從後方追趕，幾秒後能追上？`, ans: `${t}秒`, options: [`${t}秒`, `${t+5}秒`, `${t-2}秒`, `${Math.floor(distAhead/v1)}秒`] };
+                },
+                () => { // 2. 速率: 相遇問題
+                    let t = Math.floor(Math.random() * 8 + 8); let v1 = Math.floor(Math.random() * 20 + 40); let v2 = Math.floor(Math.random() * 20 + 30); let dist = (v1 + v2) * t;
+                    let distText = dist >= 1000 ? `${dist/1000}公里` : `${dist}公尺`;
+                    return { type: "相遇問題", q: `甲乙兩地相距 <b>${distText}</b>，小真(${v1}m/分)和小智(${v2}m/分)同時相向而行，幾分鐘後相遇？`, ans: `${t}分鐘`, options: [`${t}分鐘`, `${t-3}分鐘`, `${t+4}分鐘`, `${Math.floor((dist/(v1+v2))/60)}分鐘`] };
+                },
+                () => { // 3. 速率: 反向而行
+                    let t = Math.floor(Math.random() * 5 + 3); let v1 = Math.floor(Math.random() * 10 + 15); let v2 = Math.floor(Math.random() * 10 + 10); let dist = (v1 + v2) * t;
+                    return { type: "背向而行", q: `兩人從同地<b>背向而行</b>，A秒速 ${v1}m，B秒速 ${v2}m，${t}秒後兩人相距幾公尺？`, ans: `${dist}公尺`, options: [`${dist}公尺`, `${(v1-v2)*t}公尺`, `${dist+10}公尺`, `${dist-v1}公尺`] };
+                },
+                () => { // 4. 雞兔同籠: 腳數量
+                    let types = [["狗", 4, "鴨", 2], ["兔子", 4, "雞", 2], ["青蛙", 4, "鴿子", 2]][Math.floor(Math.random()*3)];
+                    let count1 = Math.floor(Math.random() * 6 + 3); let count2 = Math.floor(Math.random() * 8 + 4); let total = count1 + count2; let legs = count1 * types[1] + count2 * types[3];
+                    return { type: "邏輯推演", q: `院子裡${types[0]}和${types[2]}共 ${total} 隻，腳共 ${legs} 隻。請問<b>${types[0]}</b>有幾隻？`, ans: `${count1}隻`, options: [`${count1}隻`, `${count2}隻`, `${count1+2}隻`, `${Math.abs(count1-1) || count1+3}隻`] };
+                },
+                () => { // 5. 雞兔同籠: 車輪變化
+                    let types = [["三輪車", 3, "腳踏車", 2], ["汽車", 4, "機車", 2]][Math.floor(Math.random()*2)];
+                    let count1 = Math.floor(Math.random() * 5 + 5); let count2 = Math.floor(Math.random() * 10 + 5); let total = count1 + count2; let wheels = count1 * types[1] + count2 * types[3];
+                    return { type: "邏輯推演", q: `停車場有${types[0]}和${types[2]}共 ${total} 輛，輪子總共 ${wheels} 個。請問<b>${types[2]}</b>有幾輛？`, ans: `${count2}輛`, options: [`${count2}輛`, `${count1}輛`, `${count2+3}輛`, `${count1+count2-2}輛`] };
+                },
+                () => { // 6. 年齡變化: 幾年後倍數
+                    let M = Math.floor(Math.random() * 2 + 2); 
+                    let S_future = M === 2 ? Math.floor(Math.random() * 8 + 22) : Math.floor(Math.random() * 6 + 12); 
+                    let F_future = S_future * M;
+                    let years = Math.floor(Math.random() * 6 + 3); 
+                    let S_now = S_future - years; let F_now = F_future - years;
+                    let rel = ["爸爸", "兒子", "大雄", "小叮噹"][Math.floor(Math.random()*2) * 2];
+                    let rel2 = rel === "爸爸" ? "兒子" : "小叮噹";
+                    return { type: "年齡推算", q: `${rel}今年 ${F_now} 歲，${rel2}今年 ${S_now} 歲。<b>幾年後</b> ${rel}的年齡是${rel2}的 ${M} 倍？`, ans: `${years}年後`, options: [`${years}年後`, `${years+2}年後`, `${Math.abs(years-1)||years+4}年後`, `${years+M}年後`] };
+                },
+                () => { // 7. 年齡變化: 幾年前倍數
+                    let M = Math.floor(Math.random() * 3 + 3); 
+                    let S_past = Math.floor(Math.random() * 4 + 8); let F_past = S_past * M;
+                    let years = Math.floor(Math.random() * 6 + 4); 
+                    let S_now = S_past + years; let F_now = F_past + years;
+                    return { type: "年齡推算", q: `媽媽今年 ${F_now} 歲，女兒今年 ${S_now} 歲。請問 <b>幾年前</b> 媽媽的年齡是女兒的 ${M} 倍？`, ans: `${years}年前`, options: [`${years}年前`, `${years+2}年前`, `${Math.abs(years-1)||years+3}年前`, `${years+4}年前`] };
+                },
+                () => { // 8. 年齡推斷: 年齡差不變
+                    let diff = Math.floor(Math.random() * 10 + 20); let M = Math.floor(Math.random() * 2 + 3);
+                    let son_age = diff / (M - 1); // Ensure it's divisible
+                    while(diff % (M-1) !== 0) { diff++; son_age = diff / (M - 1); }
+                    let dad_age = son_age * M;
+                    return { type: "年齡差不變", q: `叔叔和姪子兩人相差 ${diff} 歲，當叔叔的年齡是姪子的 ${M} 倍時，<b>姪子</b>是幾歲？`, ans: `${son_age}歲`, options: [`${son_age}歲`, `${dad_age}歲`, `${son_age+2}歲`, `${son_age-1}歲`] };
+                },
+                () => { // 9. 平均陷阱: 小數點
+                    let t_avg = Math.floor(Math.random() * 10 + 85); let count = Math.floor(Math.random() * 2 + 3); let total = t_avg * count;
+                    let currentSum = total - Math.floor(Math.random() * 15 + 5); let targetScore = total - currentSum;
+                    let currentAvg = (currentSum / (count-1)).toFixed(1); if(currentAvg.endsWith('.0')) currentAvg = parseInt(currentAvg); 
+                    return { type: "平均數概念", q: `前 ${count-1} 次測驗平均為 ${currentAvg} 分，第 ${count} 次要考幾分，<b>總平均才會是 ${t_avg} 分</b>？`, ans: `${targetScore}分`, options: [`${targetScore}分`, `${targetScore+2}分`, `${targetScore-3}分`, `${t_avg}分`] };
+                },
+                () => { // 10. 平均陷阱: 轉學生加入
+                    let initialAvg = Math.floor(Math.random() * 10 + 75); let pCount = Math.floor(Math.random() * 5 + 10);
+                    let newScore = initialAvg + Math.floor(Math.random() * 10 + 5);
+                    let newAvg = ((initialAvg * pCount + newScore) / (pCount + 1)).toFixed(1);
+                    if(newAvg.endsWith('.0')) newAvg = parseInt(newAvg);
+                    return { type: "平均數概念", q: `${pCount}人平均體重 ${initialAvg}kg，加入一個重 ${newScore}kg 的人後，<b>新的平均</b>體重是多少？`, ans: `${newAvg}kg`, options: [`${newAvg}kg`, `${initialAvg+1}kg`, `${((initialAvg+newScore)/2).toFixed(1)}kg`, `${(newAvg-0.5).toFixed(1)}kg`] };
+                },
+                () => { // 11. 價格分配: 總價反推
+                    let items = [["郵票", 5, 12], ["水餃", 6, "鍋貼", 8], ["原子筆", 15, "鉛筆", 10]][Math.floor(Math.random()*3)];
+                    let pA = items[1], pB = items[2] || items[1]*2; 
+                    if(typeof pB === "string") { pB = items[3]; } // Handle array variance
+                    let cA = Math.floor(Math.random() * 10 + 8); let cB = Math.floor(Math.random() * 10 + 5); let total = cA + cB; let cost = pA * cA + pB * cB;
+                    let name = typeof items[2] === "string" ? items[2] : `${pB}元的${items[0]}`;
+                    return { type: "單價與總價", q: `買 ${pA}元和 ${pB}元的物品共 ${total} 個，花 ${cost} 元。<b>${name}</b>買了幾個？`, ans: `${cB}個`, options: [`${cB}個`, `${cA}個`, `${cB+2}個`, `${Math.abs(cB-3) || cB+4}個`] };
+                },
+                () => { // 12. 小數計算: 重量計算 (修正：確保最高至小數第一位)
+                    let bottle = Math.floor(Math.random() * 5 + 1) / 10; // 0.1 ~ 0.5
+                    let half_juice = Math.floor(Math.random() * 15 + 5) / 10; // 0.5 ~ 1.9
+                    let juice = half_juice * 2; 
+                    let total_w = (bottle + juice).toFixed(1);
+                    let half_w = (bottle + half_juice).toFixed(1);
+                    let ans = bottle.toFixed(1);
+                    return { type: "小數計算", q: `一瓶果汁連瓶重 ${total_w} 公斤，喝掉一半後，連瓶重 ${half_w} 公斤。<b>空瓶子</b>重多少公斤？`, ans: `${ans}公斤`, options: [`${ans}公斤`, `${half_juice.toFixed(1)}公斤`, `${(parseFloat(total_w) - parseFloat(half_w)).toFixed(1)}公斤`, `${(bottle+0.5).toFixed(1)}公斤`] };
+                },
+                () => { // 13. 分數/小數: 水桶裝水 (修正：確保被除數可整除且選項不超過小數第一位)
+                    let bucket = Math.floor(Math.random() * 5 + 3) / 10;
+                    let water = Math.floor(Math.random() * 7 + 5) * 3 / 10; 
+                    let total = (bucket + water).toFixed(1); 
+                    let pour_out = (water / 3).toFixed(1); 
+                    let remain = (parseFloat(total) - parseFloat(pour_out)).toFixed(1);
+                    return { type: "小數計算", q: `水桶裝滿水重 ${total}kg，倒出三分之一的水後，剩下 ${remain}kg。請問<b>空水桶</b>重多少？`, ans: `${bucket.toFixed(1)}kg`, options: [`${bucket.toFixed(1)}kg`, `${(bucket+0.2).toFixed(1)}kg`, `${(parseFloat(total)-parseFloat(remain)).toFixed(1)}kg`, `${(bucket+0.5).toFixed(1)}kg`] };
+                },
+                () => { // 14. 植樹陷阱: 兩端都種
+                    let interval = [5, 10, 12, 15, 20][Math.floor(Math.random() * 5)]; let count = Math.floor(Math.random() * 10 + 10); let length = interval * count; let trees = count + 1;
+                    return { type: "間隔問題", q: `在長 ${length} 公尺的道路一旁種樹，每隔 ${interval} 公尺種一棵，<b>兩端都要種</b>，需要幾棵樹？`, ans: `${trees}棵`, options: [`${trees}棵`, `${count}棵`, `${trees-2}棵`, `${trees+1}棵`] };
+                },
+                () => { // 15. 植樹陷阱: 兩端都不種
+                    let interval = [4, 6, 8, 10][Math.floor(Math.random() * 4)]; let count = Math.floor(Math.random() * 10 + 8); let length = interval * count; let trees = count - 1;
+                    return { type: "間隔問題", q: `兩根電線桿相距 ${length} 公尺，中間每隔 ${interval} 公尺放一個三角錐，<b>兩端都不放</b>，共放幾個？`, ans: `${trees}個`, options: [`${trees}個`, `${count}個`, `${trees+2}個`, `${trees-1}個`] };
+                },
+                () => { // 16. 植樹陷阱: 環形 (一端種一端不種)
+                    let perim = Math.floor(Math.random() * 100 + 100); let interval = [5, 10, 20][Math.floor(Math.random() * 3)]; let trees = perim / interval;
+                    return { type: "間隔問題", q: `在周長 ${perim} 公尺的<b>圓形</b>水池周圍，每隔 ${interval} 公尺擺一盆花，共需要幾盆花？`, ans: `${trees}盆`, options: [`${trees}盆`, `${trees+1}盆`, `${trees-1}盆`, `${trees+2}盆`] };
+                },
+                () => { // 17. 速率陷阱: 過山洞
+                    let train = Math.floor(Math.random()*3 + 1)*50 + 50; let tunnel = Math.floor(Math.random()*4 + 3)*100; let speed = Math.floor(Math.random()*2 + 2)*10; let time = (train + tunnel) / speed;
+                    return { type: "速率陷阱", q: `火車長 ${train}m，以 ${speed}m/s 的速率通過長 ${tunnel}m 的隧道，<b>完全通過</b>需要幾秒？`, ans: `${time}秒`, options: [`${time}秒`, `${tunnel/speed}秒`, `${time+5}秒`, `${time-2}秒`] };
+                },
+                () => { // 18. 速率陷阱: 完全上橋到下橋
+                    let train = Math.floor(Math.random()*2 + 1)*60 + 40; let bridge = Math.floor(Math.random()*5 + 5)*100; let speed = Math.floor(Math.random()*3 + 2)*10; let time = (train + bridge) / speed;
+                    return { type: "速率陷阱", q: `列車長 ${train}m，秒速 ${speed}m。從車頭上橋到<b>車尾下橋</b>，橋長 ${bridge}m，需時多久？`, ans: `${time}秒`, options: [`${time}秒`, `${bridge/speed}秒`, `${time+4}秒`, `${time-3}秒`] };
+                },
+                () => { // 19. 水流陷阱: 逆流
+                    let v_boat = Math.floor(Math.random() * 8 + 12); let v_water = Math.floor(Math.random() * 3 + 2); let time = Math.floor(Math.random() * 3 + 2); let v_up = v_boat - v_water; let dist = v_up * time;
+                    return { type: "水流速率", q: `船在靜水時速 ${v_boat}km/hr，水流時速 ${v_water}km/hr。船<b>逆流而上</b>航行 ${time} 小時，共走多少公里？`, ans: `${dist}公里`, options: [`${dist}公里`, `${(v_boat+v_water)*time}公里`, `${v_boat*time}公里`, `${dist+v_water}公里`] };
+                },
+                () => { // 20. 水流陷阱: 順流推算
+                    let v_boat = Math.floor(Math.random() * 10 + 15); let v_water = Math.floor(Math.random() * 4 + 2); let time = Math.floor(Math.random() * 3 + 2); let dist = (v_boat + v_water) * time;
+                    return { type: "水流速率", q: `船速 ${v_boat}km/hr，水流 ${v_water}km/hr。若<b>順流而下</b>航行 ${dist} 公里，需要花多少小時？`, ans: `${time}小時`, options: [`${time}小時`, `${Math.ceil(dist/v_boat)}小時`, `${time+1.5}小時`, `${time-0.5}小時`] };
+                },
+                () => { // 21. 比例陷阱: 男女生
+                    let ratio_boy = Math.floor(Math.random() * 2 + 3); let ratio_girl = Math.floor(Math.random() * 2 + 5); let multiplier = Math.floor(Math.random() * 5 + 4); let boys = ratio_boy * multiplier; let girls = ratio_girl * multiplier; let total = boys + girls;
+                    return { type: "比例分配", q: `六年級男、女生人數比是 ${ratio_boy}：${ratio_girl}。已知男生有 ${boys} 人，六年級<b>全部</b>有幾人？`, ans: `${total}人`, options: [`${total}人`, `${girls}人`, `${total-ratio_boy}人`, `${total+ratio_girl}人`] };
+                },
+                () => { // 22. 比例陷阱: 果汁調配
+                    let rA = Math.floor(Math.random() * 2 + 2); let rB = Math.floor(Math.random() * 3 + 3); let totalVol = (rA + rB) * Math.floor(Math.random() * 5 + 5) * 10;
+                    let part = totalVol / (rA + rB); let volA = part * rA;
+                    return { type: "比例分配", q: `蘋果汁與柳橙汁以 ${rA}：${rB} 混合成 ${totalVol} 毫升綜合果汁，裡面包含<b>蘋果汁</b>多少毫升？`, ans: `${volA}毫升`, options: [`${volA}毫升`, `${part*rB}毫升`, `${volA+50}毫升`, `${volA-20}毫升`] };
+                },
+                () => { // 23. 邏輯推演: 蝸牛爬井
+                    let depth = Math.floor(Math.random() * 5 + 10); let up = Math.floor(Math.random() * 2 + 3); let down = up - Math.floor(Math.random() * 1 + 1);
+                    let days = Math.ceil((depth - up) / (up - down)) + 1;
+                    return { type: "邏輯推演", q: `蝸牛爬 ${depth}m 深的井，白天往上爬 ${up}m，晚上滑下 ${down}m。請問<b>第幾天</b>可以爬出井口？`, ans: `第${days}天`, options: [`第${days}天`, `第${Math.ceil(depth/(up-down))}天`, `第${days+1}天`, `第${days-1}天`] };
+                },
+                () => { // 24. 邏輯推演: 賣雞蛋
+                    let final_left = Math.floor(Math.random() * 5 + 2); let extra = Math.floor(Math.random() * 2 + 1);
+                    let original = (final_left + extra) * 2;
+                    return { type: "邏輯推演", q: `農夫賣雞蛋，賣出全部的<b>一半又多 ${extra} 顆</b>後，還剩下 ${final_left} 顆。請問原本有幾顆雞蛋？`, ans: `${original}顆`, options: [`${original}顆`, `${final_left*2+extra}顆`, `${(final_left+extra)*3}顆`, `${original-2}顆`] };
+                }
+            ];
+            
+            // 確保題庫不頻繁重複
+            if (usedQuestionIndices.length >= templates.length - 3) {
+                usedQuestionIndices = []; // 記憶庫快滿時清空
+            }
+            let randIdx;
+            do { 
+                randIdx = Math.floor(Math.random() * templates.length); 
+            } while(usedQuestionIndices.includes(randIdx));
+            usedQuestionIndices.push(randIdx);
+
+            let qData = templates[randIdx]();
+            
+            // 強化的選項產生器 (修正：限制浮點數不超過小數第一位)
+            qData.options = [...new Set(qData.options)];
+            while(qData.options.length < 4) {
+                let numMatch = qData.ans.match(/[\d\.]+/);
+                let fakeStr = qData.ans;
+                if(numMatch) {
+                    let numStr = numMatch[0];
+                    let isDecimal = numStr.includes('.');
+                    let decPlaces = isDecimal ? numStr.split('.')[1].length : 0;
+                    let actualNum = parseFloat(numStr);
+                    let fakeNum;
+                    if (isDecimal) {
+                        let offset = Math.floor(Math.random() * 30 - 15) / Math.pow(10, decPlaces);
+                        if(offset === 0) offset = 2 / Math.pow(10, decPlaces);
+                        fakeNum = actualNum + offset;
+                        if (fakeNum <= 0) fakeNum += 5 / Math.pow(10, decPlaces);
+                        fakeStr = qData.ans.replace(numStr, fakeNum.toFixed(decPlaces));
+                    } else {
+                        let offset = Math.floor(Math.random() * 15 - 7);
+                        if(offset === 0) offset = 3;
+                        fakeNum = actualNum + offset;
+                        if (fakeNum <= 0) fakeNum += 10;
+                        fakeStr = qData.ans.replace(numStr, fakeNum);
+                    }
+                }
+                if(!qData.options.includes(fakeStr)) qData.options.push(fakeStr);
+            }
+            return qData;
+        }
+
+        const relics = ["🏺", "🗿", "⚰️", "🏛️", "👑", "🕰️", "💎", "🔭"];
+        const repairTools = [ { icon: "🔨" }, { icon: "🔧" }, { icon: "🪡" }, { icon: "🖌️" } ];
+
+        let state = {
+            isPlaying: false, isPaused: false, score: 0, strikes: 0, time: 90,
+            timerId: null, currentQ: null, progress: 0, relicIndex: 0, totalAnswered: 0
+        };
+
+        const els = {
+            dropZone: document.getElementById('drop-zone'),
+            relicTarget: document.getElementById('relic-target'),
+            toolsContainer: document.getElementById('tools-container'),
+            qText: document.getElementById('q-text'), qCat: document.getElementById('q-category'),
+            progressCircle: document.getElementById('progress-circle'),
+            correctMsg: document.getElementById('correct-msg'), 
+            errorMsg: document.getElementById('error-msg'), correctVal: document.getElementById('correct-val'),
+            light1: document.getElementById('light-1'), light2: document.getElementById('light-2'),
+            score: document.getElementById('score'), timer: document.getElementById('timer'),
+            startBtn: document.getElementById('start-btn'), username: document.getElementById('username'),
+            startScreen: document.getElementById('start-screen'),
+            showRankBtn: document.getElementById('show-rank-btn'), endRankBtn: document.getElementById('end-rank-btn'),
+            rankModal: document.getElementById('rank-modal'), closeRankBtn: document.getElementById('close-rank-btn'),
+            rankList: document.getElementById('rank-list'), endScreen: document.getElementById('end-screen'),
+            finalScore: document.getElementById('final-score'), endTitle: document.getElementById('end-title'),
+            endStatusText: document.getElementById('end-status-text'), bagIcon: document.getElementById('bag-icon'),
+            calcBoard: document.getElementById('calc-board'), toggleWbBtn: document.getElementById('toggle-wb'),
+            clearWbBtn: document.getElementById('clear-wb'), pauseBtn: document.getElementById('pause-btn'),
+            restartBtn: document.getElementById('restart-btn'), backBtn: document.getElementById('back-btn'),
+            rewardBadge: document.getElementById('reward-badge')
+        };
+
+        // --- Event Listeners ---
+        els.startBtn.addEventListener('click', startGame);
+        els.showRankBtn.addEventListener('click', () => { updateRankDisplay(); els.rankModal.style.display = 'block'; });
+        els.endRankBtn.addEventListener('click', () => { updateRankDisplay(); els.rankModal.style.display = 'block'; });
+        els.closeRankBtn.addEventListener('click', () => { els.rankModal.style.display = 'none'; });
+
+        // 暫停按鈕邏輯
+        els.pauseBtn.addEventListener('click', () => {
+            if(!state.isPlaying) return;
+            state.isPaused = !state.isPaused;
+            if(state.isPaused) {
+                clearInterval(state.timerId);
+                els.pauseBtn.innerText = "▶️ 繼續";
+                els.pauseBtn.style.background = "var(--brand-yellow)"; els.pauseBtn.style.color = "#000";
+                els.qCat.innerText = "遊戲暫停中";
+                els.qText.style.visibility = "hidden";
+                els.toolsContainer.style.visibility = "hidden";
+            } else {
+                state.timerId = setInterval(() => {
+                    state.time--; els.timer.innerText = state.time;
+                    if(state.time <= 0) endGame();
+                }, 1000);
+                els.pauseBtn.innerText = "⏸️ 暫停";
+                els.pauseBtn.style.background = "rgba(0,0,0,0.8)"; els.pauseBtn.style.color = "var(--brand-yellow)";
+                els.qCat.innerText = state.currentQ ? state.currentQ.type : "系統準備中";
+                els.qText.style.visibility = "visible";
+                els.toolsContainer.style.visibility = "visible";
+            }
+        });
+
+        els.restartBtn.addEventListener('click', () => { location.reload(); });
+
+        // --- 白板系統 ---
+        const ctx = els.calcBoard.getContext('2d');
+        let isDrawing = false, isWbActive = false;
+
+        function resizeCanvas() {
+            els.calcBoard.width = window.innerWidth; els.calcBoard.height = window.innerHeight;
+            ctx.strokeStyle = "red"; ctx.lineWidth = 3; ctx.lineCap = "round";
+        }
+        window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+        els.toggleWbBtn.addEventListener('click', () => {
+            isWbActive = !isWbActive;
+            if(isWbActive) {
+                els.calcBoard.classList.add('active'); els.toggleWbBtn.classList.add('active-btn');
+                els.toggleWbBtn.innerText = "✖️ 關閉計算紙"; els.clearWbBtn.style.display = 'inline-block';
+            } else {
+                els.calcBoard.classList.remove('active'); els.toggleWbBtn.classList.remove('active-btn');
+                els.toggleWbBtn.innerText = "✏️ 寫計算紙"; els.clearWbBtn.style.display = 'none';
+            }
+        });
+        
+        els.clearWbBtn.addEventListener('click', () => { ctx.clearRect(0, 0, els.calcBoard.width, els.calcBoard.height); });
+
+        const startDraw = (e) => { if(!isWbActive) return; isDrawing = true; draw(e); e.preventDefault(); };
+        const endDraw = () => { isDrawing = false; ctx.beginPath(); };
+        const draw = (e) => {
+            if(!isDrawing || !isWbActive) return; e.preventDefault();
+            const rect = els.calcBoard.getBoundingClientRect();
+            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            ctx.lineTo(clientX - rect.left, clientY - rect.top); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(clientX - rect.left, clientY - rect.top);
+        };
+        els.calcBoard.addEventListener('mousedown', startDraw); els.calcBoard.addEventListener('mousemove', draw);
+        els.calcBoard.addEventListener('mouseup', endDraw); els.calcBoard.addEventListener('touchstart', startDraw, {passive: false});
+        els.calcBoard.addEventListener('touchmove', draw, {passive: false}); els.calcBoard.addEventListener('touchend', endDraw);
+
+        // --- Game Logic ---
+        function startGame() {
+            const name = els.username.value.trim();
+            if(!name) { alert("請輸入代號才能開始任務!"); return; }
+            els.startScreen.style.display = 'none';
+            state.isPlaying = true; state.isPaused = false; state.score = 0; state.time = 90;
+            state.totalAnswered = 0;
+            
+            els.pauseBtn.style.display = 'inline-block'; els.restartBtn.style.display = 'inline-block'; els.backBtn.style.display = 'inline-block';
+            playSound(sounds.bgm);
+
+            state.timerId = setInterval(() => {
+                state.time--; els.timer.innerText = state.time;
+                if(state.time <= 0) endGame();
+            }, 1000);
+            loadRelic();
+        }
+
+        function loadRelic() {
+            state.strikes = 0; state.progress = 0;
+            updateStrikes(); updateProgress(0);
+            els.relicTarget.innerText = relics[state.relicIndex % relics.length];
+            els.relicTarget.style.opacity = 1; els.relicTarget.style.transform = "scale(1)";
+            
+            els.relicTarget.className = "relic-img"; 
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            state.currentQ = generateDynamicQuestion();
+            
+            els.qCat.innerText = state.currentQ.type;
+            els.qText.innerHTML = state.currentQ.q; 
+            
+            els.toolsContainer.innerHTML = "";
+            let options = [...state.currentQ.options].sort(() => Math.random() - 0.5);
+            
+            options.forEach((opt, index) => {
+                const toolData = repairTools[index % 4]; 
+                const card = document.createElement('div');
+                card.className = 'tool-card';
+                card.innerHTML = `<div class="tool-icon">${toolData.icon}</div><div class="tool-value">${opt}</div>`;
+                addDragLogic(card, opt, toolData.icon);
+                els.toolsContainer.appendChild(card);
+            });
+        }
+
+        function addDragLogic(el, value, iconChar) {
+            let isDragging = false;
+            const start = (e) => {
+                if(!state.isPlaying || isWbActive || state.isPaused) return; 
+                isDragging = true; el.classList.add('dragging');
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                updatePos(clientX, clientY);
+            };
+            const move = (e) => {
+                if(!isDragging) return; e.preventDefault(); 
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                updatePos(clientX, clientY);
+            };
+            const end = (e) => {
+                if(!isDragging) return; isDragging = false;
+                el.classList.remove('dragging'); el.style.position = ''; el.style.left = ''; el.style.top = '';
+                const dropRect = els.dropZone.getBoundingClientRect();
+                const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+                const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+                if(clientX > dropRect.left && clientX < dropRect.right && clientY > dropRect.top && clientY < dropRect.bottom) {
+                    checkAnswer(value, iconChar);
+                }
+            };
+            const updatePos = (x, y) => { el.style.left = (x - 45) + 'px'; el.style.top = (y - 50) + 'px'; };
+            el.addEventListener('mousedown', start); el.addEventListener('touchstart', start, {passive: false});
+            window.addEventListener('mousemove', move); window.addEventListener('touchmove', move, {passive: false});
+            window.addEventListener('mouseup', end); window.addEventListener('touchend', end);
+        }
+
+        function checkAnswer(val, toolIcon) {
+            state.totalAnswered++;
+            const isCorrect = (val === state.currentQ.ans);
+
+            if(isCorrect) {
+                els.correctMsg.style.display = 'block';
+                setTimeout(() => { els.correctMsg.style.display = 'none'; }, 800);
+
+                playRepairEffect(toolIcon);
+                
+                // 升級感特效
+                els.relicTarget.classList.remove('relic-upgrade');
+                void els.relicTarget.offsetWidth; // 強制重繪
+                els.relicTarget.classList.add('relic-upgrade');
+
+                state.progress += 50; 
+                updateProgress(state.progress);
+                
+                if(state.progress >= 100) {
+                    state.score++; state.relicIndex++;
+                    els.score.innerText = state.score;
+                    
+                    // 完全修復：煥然一新特效
+                    els.relicTarget.classList.remove('relic-upgrade', 'relic-cracked');
+                    els.relicTarget.classList.add('relic-restored');
+                    
+                    // 產生擴散光環
+                    const ring = document.createElement('div');
+                    ring.className = 'ring-particle';
+                    els.dropZone.appendChild(ring);
+                    setTimeout(() => ring.remove(), 800);
+                    
+                    playSound(sounds.repairOne);
+
+                    // 延遲飛進包包，讓玩家能欣賞煥然一新的古物
+                    setTimeout(() => {
+                        playFlyToBagEffect(els.relicTarget.innerText, false);
+
+                        if(state.score >= 4) { // 過關條件改為修復至少4個
+                            setTimeout(() => endGame(true), 1200);
+                        } else {
+                            setTimeout(loadRelic, 1000);
+                        }
+                    }, 800);
+                    
+                } else {
+                    playSound(sounds.correctOnce, true); // 只播前三秒
+                    setTimeout(nextQuestion, 600);
+                }
+            } else {
+                state.strikes++; updateStrikes();
+                
+                if(state.strikes >= 2) {
+                    // 兩次失誤：徹底碎裂特效
+                    playShatterEffect(state.currentQ.ans);
+                    playSound(sounds.failTwice, true); // 只播前三秒
+                    state.relicIndex++;
+                    setTimeout(() => { els.errorMsg.style.display = 'none'; loadRelic(); }, 1500);
+                } else {
+                    // 一次失誤：搖晃生煙
+                    playCrackEffect(state.currentQ.ans);
+                    playSound(sounds.failOnce, true); // 只播前三秒
+                    setTimeout(nextQuestion, 1500);
+                }
+            }
+        }
+
+        // --- 特效實作 ---
+        function playRepairEffect(icon) {
+            for(let i=0; i<6; i++) {
+                const spark = document.createElement('div');
+                spark.innerText = "✨";
+                spark.style.position = 'absolute'; spark.style.left = '50%'; spark.style.top = '50%';
+                spark.style.zIndex = '100'; spark.style.pointerEvents = 'none';
+                let angle = (i / 6) * Math.PI * 2;
+                spark.style.setProperty('--tx', Math.cos(angle) * 80 + 'px');
+                spark.style.setProperty('--ty', Math.sin(angle) * 80 + 'px');
+                spark.style.animation = 'sparkAnim 0.6s ease-out forwards';
+                els.dropZone.appendChild(spark);
+                setTimeout(() => spark.remove(), 600);
+            }
+        }
+
+        function playCrackEffect(correctAnswer) {
+            els.correctVal.innerText = correctAnswer;
+            els.errorMsg.style.display = 'block';
+            els.relicTarget.classList.add('relic-cracked');
+            
+            els.dropZone.animate([
+                { transform: 'translateX(-15px) rotate(-3deg)' }, 
+                { transform: 'translateX(15px) rotate(3deg)' }, 
+                { transform: 'translateX(-15px) rotate(-3deg)' },
+                { transform: 'translateX(0) rotate(0)' }
+            ], { duration: 150, iterations: 3 });
+            
+            for(let i=0; i<8; i++) {
+                const smoke = document.createElement('div');
+                smoke.className = 'smoke-particle';
+                smoke.style.left = '50%'; smoke.style.top = '50%';
+                let angle = Math.random() * Math.PI * 2;
+                let dist = Math.random() * 60 + 40;
+                smoke.style.setProperty('--tx', `calc(-50% + ${Math.cos(angle)*dist}px)`);
+                smoke.style.setProperty('--ty', `calc(-50% + ${Math.sin(angle)*dist - 40}px)`);
+                els.dropZone.appendChild(smoke);
+                setTimeout(() => smoke.remove(), 800);
+            }
+
+            setTimeout(() => { 
+                els.errorMsg.style.display = 'none'; 
+                els.relicTarget.classList.remove('relic-cracked');
+            }, 1400);
+        }
+
+        function playShatterEffect(correctAnswer) {
+            els.correctVal.innerText = correctAnswer;
+            els.errorMsg.style.display = 'block';
+            els.relicTarget.classList.add('relic-shatter');
+            
+            // 產生噴射碎片
+            for(let i=0; i<10; i++) {
+                const shard = document.createElement('div');
+                shard.className = 'shard-particle';
+                shard.style.left = '50%'; shard.style.top = '50%';
+                let angle = Math.random() * Math.PI * 2;
+                let dist = Math.random() * 80 + 50;
+                shard.style.setProperty('--tx', Math.cos(angle)*dist + 'px');
+                shard.style.setProperty('--ty', (Math.sin(angle)*dist + 50) + 'px'); // 偏下墜落
+                shard.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+                els.dropZone.appendChild(shard);
+                setTimeout(() => shard.remove(), 800);
+            }
+
+            // 同時產生煙霧
+            for(let i=0; i<6; i++) {
+                const smoke = document.createElement('div');
+                smoke.className = 'smoke-particle';
+                smoke.style.left = '50%'; smoke.style.top = '50%';
+                let angle = Math.random() * Math.PI * 2;
+                let dist = Math.random() * 70 + 30;
+                smoke.style.setProperty('--tx', `calc(-50% + ${Math.cos(angle)*dist}px)`);
+                smoke.style.setProperty('--ty', `calc(-50% + ${Math.sin(angle)*dist - 20}px)`);
+                els.dropZone.appendChild(smoke);
+                setTimeout(() => smoke.remove(), 800);
+            }
+        }
+
+        function playFlyToBagEffect(relicChar, playSnd = true) {
+            const bagRect = els.bagIcon.getBoundingClientRect();
+            const relicRect = els.relicTarget.getBoundingClientRect();
+            
+            const flyingRelic = document.createElement('div');
+            flyingRelic.innerText = relicChar;
+            flyingRelic.style.position = 'fixed';
+            flyingRelic.style.left = relicRect.left + 'px';
+            flyingRelic.style.top = relicRect.top + 'px';
+            flyingRelic.style.width = relicRect.width + 'px';
+            flyingRelic.style.height = relicRect.height + 'px';
+            flyingRelic.style.display = 'flex';
+            flyingRelic.style.justifyContent = 'center';
+            flyingRelic.style.alignItems = 'center';
+            flyingRelic.style.fontSize = '90px';
+            flyingRelic.style.zIndex = '9999';
+            flyingRelic.style.transition = 'all 0.6s cubic-bezier(0.5, 0, 0.2, 1)'; 
+            document.body.appendChild(flyingRelic);
+            
+            els.relicTarget.style.opacity = '0'; 
+            void flyingRelic.offsetWidth; 
+            
+            flyingRelic.style.left = (bagRect.left + bagRect.width/2 - relicRect.width/2) + 'px';
+            flyingRelic.style.top = (bagRect.top + bagRect.height/2 - relicRect.height/2) + 'px';
+            flyingRelic.style.fontSize = '15px';
+            flyingRelic.style.opacity = '0.5';
+            
+            setTimeout(() => {
+                els.bagIcon.style.transform = "scale(1.5)";
+                els.bagIcon.style.filter = "drop-shadow(0 0 10px var(--brand-yellow))";
+                setTimeout(() => {
+                    els.bagIcon.style.transform = "scale(1)";
+                    els.bagIcon.style.filter = "drop-shadow(0 0 2px #fff)";
+                }, 200);
+                flyingRelic.remove();
+                if(playSnd) playSound(sounds.repairOne);
+            }, 600);
+        }
+
+        function updateStrikes() {
+            els.light1.classList.remove('active'); els.light2.classList.remove('active');
+            if(state.strikes >= 1) els.light1.classList.add('active');
+            if(state.strikes >= 2) els.light2.classList.add('active');
+        }
+
+        function updateProgress(percent) {
+            const radius = 110; 
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (Math.min(percent, 100) / 100) * circumference;
+            els.progressCircle.style.strokeDasharray = circumference;
+            els.progressCircle.style.strokeDashoffset = offset;
+        }
+
+        function endGame(earlyWin = false) {
+            state.isPlaying = false; clearInterval(state.timerId);
+            sounds.bgm.pause(); sounds.bgm.currentTime = 0;
+            if(isWbActive) els.toggleWbBtn.click();
+            
+            const isSuccess = state.score >= 4;
+            const statusStr = isSuccess ? "成功" : "失敗";
+            
+            els.endScreen.style.display = 'flex'; els.finalScore.innerText = state.score;
+            if(isSuccess) {
+                playSound(sounds.gameWin); 
+                els.endTitle.innerText = "任務成功！"; els.endTitle.style.color = "var(--neon-cyan)";
+                els.endStatusText.innerText = `太棒了！您在期限內成功修復了 ${state.score} 個文物。`;
+                els.rewardBadge.style.display = 'block'; // 顯示徽章
+            } else {
+                playSound(sounds.gameLose); 
+                els.endTitle.innerText = "闖關失敗"; els.endTitle.style.color = "var(--danger)";
+                els.endStatusText.innerText = "未達標 (目標：修復至少4個文物)，請再挑戰一次！";
+                els.rewardBadge.style.display = 'none'; // 隱藏徽章
+            }
+            saveScore(els.username.value, state.score, state.totalAnswered, statusStr);
+        }
+
+        // --- 排行榜 (Top 10) ---
+        function saveScore(name, score, totalAns, status) {
+            let ranks = JSON.parse(localStorage.getItem('jessieMathRankPro')) || [];
+            let now = new Date();
+            let dateStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            ranks.push({ name: name, score: score, totalAns: totalAns, status: status, date: dateStr });
+            ranks.sort((a, b) => b.score - a.score);
+            ranks = ranks.slice(0, 10);
+            localStorage.setItem('jessieMathRankPro', JSON.stringify(ranks));
+        }
+
+        function getMedal(index) {
+            const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
+            return medals[index] || `#${index+1}`;
+        }
+
+        function updateRankDisplay() {
+            const ranks = JSON.parse(localStorage.getItem('jessieMathRankPro')) || [];
+            els.rankList.innerHTML = "";
+            if (ranks.length === 0) {
+                els.rankList.innerHTML = "<li style='text-align:center; color:#666; padding:20px;'>暫無紀錄，快來挑戰！</li>";
+                return;
+            }
+            ranks.forEach((r, i) => {
+                const li = document.createElement('li'); li.className = 'rank-item';
+                const statusColor = r.status === "成功" ? "#2ecc71" : "#e74c3c";
+                li.innerHTML = `
+                    <span style="flex:0.5">${getMedal(i)}</span>
+                    <span style="flex:1.5;text-align:left;padding-left:10px;">${r.name}</span>
+                    <span style="flex:1.2">${r.score}/${r.totalAns || 0}</span>
+                    <span style="flex:0.8;color:${statusColor}">${r.status}</span>
+                    <span style="flex:1.5;font-size:12px;color:#aaa;">${r.date}</span>
+                `;
+                els.rankList.appendChild(li);
+            });
+        }
+    </script>
+</body>
+</html>
